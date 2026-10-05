@@ -7,8 +7,6 @@ import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.project.uptime_status.service.TargetService;
@@ -36,11 +34,5 @@ public class StatusPageController {
         }
         model.addAttribute("rows", rows);
         return "status";
-    }
-
-    @PostMapping("/{key}/check")
-    public String checkNow(@PathVariable String key) {
-        targetService.check(key);
-        return "redirect:/status";
     }
 }
