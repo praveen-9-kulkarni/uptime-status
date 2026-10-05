@@ -10,12 +10,16 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.project.uptime_status.exception.UnknownTargetException;
 
 @Service
 public class TargetService {
+
+    private static final Logger log = LoggerFactory.getLogger(TargetService.class);
 
     public record Target(String name, String url) {}
 
@@ -82,5 +86,16 @@ public class TargetService {
     public Map<String, Target> targetCatalog() {
 
         return TARGETS;
+    }
+
+    public void checkAll() {
+
+        for (String key : TARGETS.keySet()) {
+            try {
+                check(key);
+            } catch (UnknownTargetException e) {
+                log.warn("Error checking target {}", key, e);
+            }
+        }
     }
 }
