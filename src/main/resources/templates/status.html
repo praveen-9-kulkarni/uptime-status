@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Status</title>
+    <style>
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #333; padding: 0.4rem 0.75rem; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Status</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Target</th>
+                <th>URL</th>
+                <th>Up</th>
+                <th>Status</th>
+                <th>Latency (ms)</th>
+                <th>Observed at</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="row : ${rows}">
+                <td th:text="${row.target.name}">GitHub</td>
+                <td th:text="${row.target.url}">https://github.com</td>
+                <td th:text="${row.lastCheck != null ? row.lastCheck.up : '—'}">—</td>
+                <td th:text="${row.lastCheck != null ? row.lastCheck.statusCode : '—'}">—</td>
+                <td th:text="${row.lastCheck != null ? row.lastCheck.latencyMs : '—'}">—</td>
+                <td th:text="${row.lastCheck != null ? row.lastCheck.observedAt : '—'}">—</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
