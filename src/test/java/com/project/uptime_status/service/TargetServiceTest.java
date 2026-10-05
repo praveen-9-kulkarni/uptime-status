@@ -57,4 +57,11 @@ class TargetServiceTest {
 		}
 		assertEquals(result, targetService.lastCheck("github"));
 	}
+
+	@Test
+	void checkAll_storesLastCheckForCatalogTargets() {
+		targetService.checkAll();
+
+		assertNotNull(targetService.lastCheck("github"));
+	}
 }
