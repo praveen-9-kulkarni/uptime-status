@@ -19,6 +19,7 @@
                 <th>Status</th>
                 <th>Latency (ms)</th>
                 <th>Observed at</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -29,6 +30,11 @@
                 <td th:text="${row.lastCheck != null ? row.lastCheck.statusCode : '—'}">—</td>
                 <td th:text="${row.lastCheck != null ? row.lastCheck.latencyMs : '—'}">—</td>
                 <td th:text="${row.lastCheck != null ? row.lastCheck.observedAt : '—'}">—</td>
+                <td>
+                    <form th:action="@{/status/{key}/check(key=${row.key})}" method="post">
+                        <button type="submit">Check now</button>
+                    </form>
+                </td>
             </tr>
         </tbody>
     </table>
