@@ -1,6 +1,14 @@
 package com.project.uptime_status.service;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
@@ -15,6 +23,14 @@ public class TargetService {
         "github", new Target("GitHub", "https://github.com")
     );
 
+    public record CheckResult(boolean up, Integer statusCode, long latencyMs, Instant observedAt) {}
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+        .connectTimeout(Duration.ofSeconds(5))
+        .build();
+
+    private Map<String, CheckResult> checkResults = new ConcurrentHashMap<>();
+
     public Target getTarget(String key) {
 
         Target target = resolveTargetOrThrow(key);
@@ -28,5 +44,38 @@ public class TargetService {
             throw new UnknownTargetException(key);
         }
         return target;
+    }
+
+    private CheckResult probe(String url) {
+
+        Instant start = Instant.now();
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .GET()
+            .timeout(Duration.ofSeconds(5))
+            .build();
+            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            return new CheckResult(response.statusCode() < 400, response.statusCode(), Duration.between(start, Instant.now()).toMillis(), start);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new CheckResult(false, null, Duration.between(start, Instant.now()).toMillis(), start);
+        } catch (IOException e) {
+            return new CheckResult(false, null, Duration.between(start, Instant.now()).toMillis(), start);
+        }
+    }
+
+    public CheckResult check(String key) {
+    
+        Target target = resolveTargetOrThrow(key);
+        CheckResult result = probe(target.url());
+        checkResults.put(key, result);
+        return result;
+    }
+
+    public CheckResult lastCheck(String key) {
+       
+        Target target = resolveTargetOrThrow(key);
+        return checkResults.get(key);
     }
 }
