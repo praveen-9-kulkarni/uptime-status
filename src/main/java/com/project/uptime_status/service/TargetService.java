@@ -78,4 +78,9 @@ public class TargetService {
         Target target = resolveTargetOrThrow(key);
         return checkResults.get(key);
     }
+
+    public Map<String, Target> targetCatalog() {
+
+        return TARGETS;
+    }
 }
