@@ -26,7 +26,8 @@ public class TargetService {
     public record Target(String name, String url) {}
 
     private final Map<String, Target> TARGETS = Map.of(
-        "github", new Target("GitHub", "https://github.com")
+        "github", new Target("GitHub", "https://github.com"),
+        "google", new Target("Google", "https://google.com")
     );
 
     public record CheckResult(boolean up, Integer statusCode, long latencyMs, Instant observedAt) {}

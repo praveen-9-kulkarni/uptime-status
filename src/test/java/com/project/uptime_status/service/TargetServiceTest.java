@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,9 +94,9 @@ class TargetServiceTest {
 		targetService.checkAll();
 
 		ArgumentCaptor<CheckResultEntity> captor = ArgumentCaptor.forClass(CheckResultEntity.class);
-		verify(checkResultRepository).save(captor.capture());
-		when(checkResultRepository.findById("github")).thenReturn(Optional.of(captor.getValue()));
-
-		assertNotNull(targetService.lastCheck("github"));
+		verify(checkResultRepository, times(2)).save(captor.capture());
+		var slugs = captor.getAllValues().stream().map(CheckResultEntity::getSlug).toList();
+		assertTrue(slugs.contains("github"));
+		assertTrue(slugs.contains("google"));
 	}
 }
