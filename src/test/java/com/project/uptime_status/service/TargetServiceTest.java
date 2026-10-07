@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.project.uptime_status.exception.UnknownTargetException;
 import com.project.uptime_status.persistence.CheckResultEntity;
+import com.project.uptime_status.persistence.CheckResultHistoryEntity;
+import com.project.uptime_status.repository.CheckResultHistoryRepository;
 import com.project.uptime_status.repository.CheckResultRepository;
 import com.project.uptime_status.service.TargetService.CheckResult;
 import com.project.uptime_status.service.TargetService.Target;
@@ -30,6 +32,9 @@ class TargetServiceTest {
 
 	@Mock
 	private CheckResultRepository checkResultRepository;
+
+	@Mock
+	private CheckResultHistoryRepository checkResultHistoryRepository;
 
 	@InjectMocks
 	private TargetService targetService;
@@ -67,6 +72,7 @@ class TargetServiceTest {
 	@Test
 	void check_knownKey_storesResultForLastCheck() {
 		when(checkResultRepository.save(any(CheckResultEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(checkResultHistoryRepository.save(any(CheckResultHistoryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		CheckResult result = targetService.check("github");
 
@@ -83,6 +89,10 @@ class TargetServiceTest {
 		CheckResultEntity saved = captor.getValue();
 		assertEquals("github", saved.getSlug());
 
+		ArgumentCaptor<CheckResultHistoryEntity> historyCaptor = ArgumentCaptor.forClass(CheckResultHistoryEntity.class);
+		verify(checkResultHistoryRepository).save(historyCaptor.capture());
+		assertEquals("github", historyCaptor.getValue().getSlug());
+
 		when(checkResultRepository.findById("github")).thenReturn(Optional.of(saved));
 		assertEquals(result, targetService.lastCheck("github"));
 	}
@@ -90,6 +100,7 @@ class TargetServiceTest {
 	@Test
 	void checkAll_storesLastCheckForCatalogTargets() {
 		when(checkResultRepository.save(any(CheckResultEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(checkResultHistoryRepository.save(any(CheckResultHistoryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		targetService.checkAll();
 
@@ -98,5 +109,7 @@ class TargetServiceTest {
 		var slugs = captor.getAllValues().stream().map(CheckResultEntity::getSlug).toList();
 		assertTrue(slugs.contains("github"));
 		assertTrue(slugs.contains("google"));
+
+		verify(checkResultHistoryRepository, times(2)).save(any(CheckResultHistoryEntity.class));
 	}
 }

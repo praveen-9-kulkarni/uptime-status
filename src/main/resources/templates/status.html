@@ -19,7 +19,7 @@
                 <th>Status</th>
                 <th>Latency (ms)</th>
                 <th>Observed at</th>
-                <th></th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +34,7 @@
                     <form th:action="@{/status/{key}/check(key=${row.key})}" method="post">
                         <button type="submit">Check now</button>
                     </form>
+                    <a th:href="@{/status/{key}/history(key=${row.key})}">History</a>
                 </td>
             </tr>
         </tbody>

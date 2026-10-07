@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'History — ' + ${key}">History</title>
+    <style>
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #333; padding: 0.4rem 0.75rem; text-align: left; }
+    </style>
+</head>
+<body>
+    <p><a th:href="@{/status}">← Status</a></p>
+    <h1 th:text="${target.name} + ' history'">History</h1>
+    <p th:text="${target.url}">url</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Up</th>
+                <th>Status</th>
+                <th>Latency (ms)</th>
+                <th>Observed at</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:if="${#lists.isEmpty(history)}">
+                <td colspan="4">No checks yet</td>
+            </tr>
+            <tr th:each="row : ${history}">
+                <td th:text="${row.up}">—</td>
+                <td th:text="${row.statusCode != null ? row.statusCode : '—'}">—</td>
+                <td th:text="${row.latencyMs}">—</td>
+                <td th:text="${row.observedAt}">—</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
