@@ -7,15 +7,19 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.project.uptime_status.exception.UnknownTargetException;
 import com.project.uptime_status.persistence.CheckResultEntity;
+import com.project.uptime_status.persistence.CheckResultHistoryEntity;
+import com.project.uptime_status.repository.CheckResultHistoryRepository;
 import com.project.uptime_status.repository.CheckResultRepository;
 
 @Service
@@ -37,9 +41,12 @@ public class TargetService {
         .build();
 
     private final CheckResultRepository checkResultRepository;
+    private final CheckResultHistoryRepository checkResultHistoryRepository;
 
-    public TargetService(CheckResultRepository checkResultRepository) {
+    public TargetService(CheckResultRepository checkResultRepository, CheckResultHistoryRepository checkResultHistoryRepository) {
+        
         this.checkResultRepository = checkResultRepository;
+        this.checkResultHistoryRepository = checkResultHistoryRepository;
     }
 
     public Target getTarget(String key) {
@@ -82,6 +89,7 @@ public class TargetService {
         Target target = resolveTargetOrThrow(key);
         CheckResult result = probe(target.url());
         checkResultRepository.save(toEntity(key, result));
+        checkResultHistoryRepository.save(toHistoryEntity(key, result));
         return result;
     }
 
@@ -109,7 +117,17 @@ public class TargetService {
         }
     }
 
+    public List<CheckResult> recentHistory(String key, int limit) {
+
+        resolveTargetOrThrow(key);
+        return checkResultHistoryRepository.findBySlugOrderByObservedAtDesc(key, PageRequest.of(0, limit))
+            .stream()
+            .map(this::toHistoryDomain)
+            .toList();
+    }
+
     private CheckResultEntity toEntity(String key, CheckResult result) {
+
         return new CheckResultEntity(
                 key,
                 result.up(),
@@ -119,10 +137,30 @@ public class TargetService {
     }
 
     private CheckResult toDomain(CheckResultEntity entity) {
+
         return new CheckResult(
                 entity.isUp(),
                 entity.getStatusCode(),
                 entity.getLatencyMs(),
                 entity.getObservedAt());
+    }
+
+    private CheckResultHistoryEntity toHistoryEntity(String key, CheckResult result) {
+        
+        return new CheckResultHistoryEntity(
+            key, 
+            result.observedAt(),
+            (int) result.latencyMs(),
+            result.statusCode(),
+            result.up());
+    }
+
+    private CheckResult toHistoryDomain(CheckResultHistoryEntity entity) {
+
+        return new CheckResult(
+            entity.isUp(),
+            entity.getStatusCode(),
+            entity.getLatencyMs(),
+            entity.getObservedAt());
     }
 }

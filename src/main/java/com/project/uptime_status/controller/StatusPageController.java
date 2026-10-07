@@ -43,4 +43,15 @@ public class StatusPageController {
         targetService.check(key);
         return "redirect:/status";
     }
+
+    @GetMapping("/{key}/history")
+    public String getHistoryPage(@PathVariable String key, Model model) {
+
+        Target target = targetService.getTarget(key);
+        List<CheckResult> history = targetService.recentHistory(key, 20);
+        model.addAttribute("key", key);
+        model.addAttribute("target", target);
+        model.addAttribute("history", history);
+        return "status-history";
+    }
 }
