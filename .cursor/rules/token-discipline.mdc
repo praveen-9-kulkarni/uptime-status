@@ -1,0 +1,19 @@
+---
+description: Cheap personal-project token discipline for ship/slice/chats
+alwaysApply: true
+---
+
+# Token discipline (personal)
+
+Prefer teaching the user over doing their work. Prefer Ask-style answers: explain options, let them implement.
+
+## When this chat is Agent
+- Do not explore the whole repo. Touch only paths the user named.
+- Do not call MCP. Do not spawn subagents unless asked.
+- For `/ship`, `/log-slice`, `/commit-msg`: if `/tmp/*-context.txt` is attached, read that only — no git/gh/shell.
+- Do not run Phase 3 (commit/push/PR/write slice). Point at `~/.cursor/scripts/*.sh`.
+- Prefer `git diff --stat` over full patches unless the user needs a hunk.
+- One task per reply; stop after the asked deliverable.
+
+## When suggesting next work
+- Name the next slice and steps; do not implement the whole slice unless asked.
