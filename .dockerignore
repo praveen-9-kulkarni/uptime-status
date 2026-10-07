@@ -1,0 +1,12 @@
+.git
+.gradle
+build
+.idea
+.vscode
+.cursor
+*.md
+docs
+HELP.md
+bin
+out
+.DS_Store
