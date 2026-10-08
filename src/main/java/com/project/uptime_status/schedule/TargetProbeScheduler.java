@@ -1,5 +1,7 @@
 package com.project.uptime_status.schedule;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,7 @@ import com.project.uptime_status.service.TargetService;
 @Profile("!worker")
 public class TargetProbeScheduler {
 
+    private final Logger log = LoggerFactory.getLogger(TargetProbeScheduler.class);
     private final TargetService targetService;
     private final ProbeQueue probeQueue;
 
@@ -22,6 +25,7 @@ public class TargetProbeScheduler {
     @Scheduled(fixedDelayString = "${uptime.probe-interval-ms}")
     public void probeAllTargets() {
 
+        log.info("Probing all targets");
         targetService.targetCatalog().keySet().forEach(probeQueue::enqueue);
     }
 }

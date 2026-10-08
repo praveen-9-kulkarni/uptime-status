@@ -163,4 +163,14 @@ public class TargetService {
             entity.getLatencyMs(),
             entity.getObservedAt());
     }
+
+    @Transactional
+    public void pruneHistory(String targetKey, int k) {
+        resolveTargetOrThrow(targetKey);
+        if (k <= 0) {
+            throw new IllegalArgumentException("history keep count must be positive");
+        }
+        checkResultHistoryRepository.deleteAllButFirstKPerSlug(targetKey, k);
+    }
 }
+
