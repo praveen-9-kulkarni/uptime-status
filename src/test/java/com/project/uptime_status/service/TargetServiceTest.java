@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -111,5 +114,27 @@ class TargetServiceTest {
 		assertTrue(slugs.contains("google"));
 
 		verify(checkResultHistoryRepository, times(2)).save(any(CheckResultHistoryEntity.class));
+	}
+
+	@Test
+	void pruneHistory_knownKey_delegatesToRepository() {
+		targetService.pruneHistory("github", 3);
+
+		verify(checkResultHistoryRepository).deleteAllButFirstKPerSlug("github", 3);
+	}
+
+	@Test
+	void pruneHistory_unknownKey_throwsUnknownTargetException() {
+		assertThrows(UnknownTargetException.class, () -> targetService.pruneHistory("nope", 3));
+
+		verify(checkResultHistoryRepository, never()).deleteAllButFirstKPerSlug(anyString(), anyInt());
+	}
+
+	@Test
+	void pruneHistory_nonPositiveKeep_throwsIllegalArgumentException() {
+		assertThrows(IllegalArgumentException.class, () -> targetService.pruneHistory("github", 0));
+		assertThrows(IllegalArgumentException.class, () -> targetService.pruneHistory("github", -1));
+
+		verify(checkResultHistoryRepository, never()).deleteAllButFirstKPerSlug(anyString(), anyInt());
 	}
 }
