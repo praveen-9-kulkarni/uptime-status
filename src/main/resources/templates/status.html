@@ -2,42 +2,82 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Status</title>
-    <style>
-        table { border-collapse: collapse; }
-        th, td { border: 1px solid #333; padding: 0.4rem 0.75rem; text-align: left; }
-    </style>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-    <h1>Status</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Target</th>
-                <th>URL</th>
-                <th>Up</th>
-                <th>Status</th>
-                <th>Latency (ms)</th>
-                <th>Observed at</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="row : ${rows}">
-                <td th:text="${row.target.name}">GitHub</td>
-                <td th:text="${row.target.url}">https://github.com</td>
-                <td th:text="${row.lastCheck != null ? row.lastCheck.up : '—'}">—</td>
-                <td th:text="${row.lastCheck != null ? row.lastCheck.statusCode : '—'}">—</td>
-                <td th:text="${row.lastCheck != null ? row.lastCheck.latencyMs : '—'}">—</td>
-                <td th:text="${row.lastCheck != null ? row.lastCheck.observedAt : '—'}">—</td>
-                <td>
-                    <form th:action="@{/status/{key}/check(key=${row.key})}" method="post">
-                        <button type="submit">Check now</button>
-                    </form>
-                    <a th:href="@{/status/{key}/history(key=${row.key})}">History</a>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" th:href="@{/status}">
+                <span class="mark" aria-hidden="true">U</span>
+                <span>
+                    <span class="brand-name">Uptime status</span>
+                    <span class="brand-sub">Catalog probes</span>
+                </span>
+            </a>
+        </div>
+    </header>
+    <main class="page">
+        <div class="page-head">
+            <div>
+                <h1>Status</h1>
+                <p class="lede">Latest check for each catalog target.</p>
+            </div>
+            <div class="summary"
+                 th:with="upCount=${rows.?[lastCheck != null and lastCheck.up].size()},
+                          downCount=${rows.?[lastCheck != null and not lastCheck.up].size()}">
+                <span class="stat"><strong th:text="${#lists.size(rows)}">0</strong> targets</span>
+                <span class="stat"><strong th:text="${upCount}">0</strong> up</span>
+                <span class="stat"><strong th:text="${downCount}">0</strong> down</span>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>URL</th>
+                        <th>State</th>
+                        <th>Status</th>
+                        <th>Latency</th>
+                        <th>Observed</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(rows)}">
+                        <td class="empty" colspan="7">No targets in the catalog.</td>
+                    </tr>
+                    <tr th:each="row : ${rows}">
+                        <td th:text="${row.target.name}">GitHub</td>
+                        <td>
+                            <a class="url" th:href="${row.target.url}" th:text="${row.target.url}"
+                               rel="noopener noreferrer">https://github.com</a>
+                        </td>
+                        <td>
+                            <span class="pill pill-unknown" th:if="${row.lastCheck == null}">No data</span>
+                            <span class="pill"
+                                  th:if="${row.lastCheck != null}"
+                                  th:classappend="${row.lastCheck.up} ? ' pill-up' : ' pill-down'"
+                                  th:text="${row.lastCheck.up} ? 'Up' : 'Down'">Up</span>
+                        </td>
+                        <td class="num" th:text="${row.lastCheck != null ? row.lastCheck.statusCode : '—'}">—</td>
+                        <td class="num" th:text="${row.lastCheck != null ? row.lastCheck.latencyMs + ' ms' : '—'}">—</td>
+                        <td class="time" th:text="${row.lastCheck != null ? row.lastCheck.observedAt : '—'}">—</td>
+                        <td>
+                            <div class="actions">
+                                <form th:action="@{/status/{key}/check(key=${row.key})}" method="post">
+                                    <button type="submit">Check now</button>
+                                </form>
+                                <a th:href="@{/status/{key}/history(key=${row.key})}">History</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 </body>
 </html>
