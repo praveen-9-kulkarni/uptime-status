@@ -2,36 +2,64 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title th:text="'History — ' + ${key}">History</title>
-    <style>
-        table { border-collapse: collapse; }
-        th, td { border: 1px solid #333; padding: 0.4rem 0.75rem; text-align: left; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'History — ' + ${target.name}">History</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-    <p><a th:href="@{/status}">← Status</a></p>
-    <h1 th:text="${target.name} + ' history'">History</h1>
-    <p th:text="${target.url}">url</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Up</th>
-                <th>Status</th>
-                <th>Latency (ms)</th>
-                <th>Observed at</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:if="${#lists.isEmpty(history)}">
-                <td colspan="4">No checks yet</td>
-            </tr>
-            <tr th:each="row : ${history}">
-                <td th:text="${row.up}">—</td>
-                <td th:text="${row.statusCode != null ? row.statusCode : '—'}">—</td>
-                <td th:text="${row.latencyMs}">—</td>
-                <td th:text="${row.observedAt}">—</td>
-            </tr>
-        </tbody>
-    </table>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" th:href="@{/status}">
+                <span class="mark" aria-hidden="true">U</span>
+                <span>
+                    <span class="brand-name">Uptime status</span>
+                    <span class="brand-sub">Catalog probes</span>
+                </span>
+            </a>
+        </div>
+    </header>
+    <main class="page">
+        <a class="back" th:href="@{/status}">← All targets</a>
+        <div class="page-head">
+            <div>
+                <h1 th:text="${target.name} + ' history'">History</h1>
+                <p class="target-url">
+                    <a class="url" th:href="${target.url}" th:text="${target.url}"
+                       rel="noopener noreferrer">url</a>
+                </p>
+            </div>
+            <div class="summary">
+                <span class="stat"><strong th:text="${#lists.size(history)}">0</strong> recent checks</span>
+            </div>
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>State</th>
+                        <th>Status</th>
+                        <th>Latency</th>
+                        <th>Observed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(history)}">
+                        <td class="empty" colspan="4">No checks yet.</td>
+                    </tr>
+                    <tr th:each="row : ${history}">
+                        <td>
+                            <span class="pill"
+                                  th:classappend="${row.up} ? ' pill-up' : ' pill-down'"
+                                  th:text="${row.up} ? 'Up' : 'Down'">Up</span>
+                        </td>
+                        <td class="num" th:text="${row.statusCode != null ? row.statusCode : '—'}">—</td>
+                        <td class="num" th:text="${row.latencyMs + ' ms'}">—</td>
+                        <td class="time" th:text="${row.observedAt}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 </body>
 </html>

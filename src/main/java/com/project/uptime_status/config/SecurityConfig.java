@@ -21,7 +21,7 @@ public class SecurityConfig {
             auth -> auth.requestMatchers(HttpMethod.GET, "/status/**", "/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/status/*/check").permitAll()
                         .requestMatchers("/targets/**").permitAll()
-                        .requestMatchers("/favicon.ico").permitAll()
+                        .requestMatchers("/favicon.ico", "/favicon.svg", "/css/**").permitAll()
                         .anyRequest()
                         .authenticated()
         ).csrf(csrf -> csrf.ignoringRequestMatchers("/targets/**")
