@@ -12,6 +12,8 @@
     --down-bg: #fdecea;
     --unknown: #5d6b7a;
     --unknown-bg: #eef1f4;
+    --stale: #9a5b00;
+    --stale-bg: #fff4de;
     --shadow: 0 1px 2px rgba(23, 32, 42, 0.06), 0 8px 24px rgba(23, 32, 42, 0.04);
     --radius: 12px;
 }
@@ -179,6 +181,18 @@ tbody tr:hover td { background: #f8fafc; }
 .pill-up { color: var(--up); background: var(--up-bg); }
 .pill-down { color: var(--down); background: var(--down-bg); }
 .pill-unknown { color: var(--unknown); background: var(--unknown-bg); }
+.pill-stale { color: var(--stale); background: var(--stale-bg); }
+
+.subtext {
+    margin-top: 0.25rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.stat-up strong { color: var(--up); }
+.stat-down strong { color: var(--down); }
+.stat-stale strong { color: var(--stale); }
 
 .actions {
     display: flex;

@@ -26,11 +26,15 @@
                 <p class="lede">Latest check for each catalog target.</p>
             </div>
             <div class="summary"
-                 th:with="upCount=${rows.?[lastCheck != null and lastCheck.up].size()},
-                          downCount=${rows.?[lastCheck != null and not lastCheck.up].size()}">
+                 th:with="upCount=${rows.?[state.name() == 'UP'].size()},
+                          downCount=${rows.?[state.name() == 'DOWN'].size()},
+                          staleCount=${rows.?[state.name() == 'STALE'].size()},
+                          noDataCount=${rows.?[state.name() == 'NO_DATA'].size()}">
                 <span class="stat"><strong th:text="${#lists.size(rows)}">0</strong> targets</span>
-                <span class="stat"><strong th:text="${upCount}">0</strong> up</span>
-                <span class="stat"><strong th:text="${downCount}">0</strong> down</span>
+                <span class="stat stat-up"><strong th:text="${upCount}">0</strong> up</span>
+                <span class="stat stat-down"><strong th:text="${downCount}">0</strong> down</span>
+                <span class="stat stat-stale"><strong th:text="${staleCount}">0</strong> stale</span>
+                <span class="stat" th:if="${noDataCount > 0}"><strong th:text="${noDataCount}">0</strong> no data</span>
             </div>
         </div>
         <div class="card">
@@ -57,11 +61,14 @@
                                rel="noopener noreferrer">https://github.com</a>
                         </td>
                         <td>
-                            <span class="pill pill-unknown" th:if="${row.lastCheck == null}">No data</span>
-                            <span class="pill"
-                                  th:if="${row.lastCheck != null}"
-                                  th:classappend="${row.lastCheck.up} ? ' pill-up' : ' pill-down'"
-                                  th:text="${row.lastCheck.up} ? 'Up' : 'Down'">Up</span>
+                            <span class="pill pill-unknown" th:if="${row.state.name() == 'NO_DATA'}">No data</span>
+                            <span class="pill pill-up" th:if="${row.state.name() == 'UP'}">Up</span>
+                            <span class="pill pill-down" th:if="${row.state.name() == 'DOWN'}">Down</span>
+                            <th:block th:if="${row.state.name() == 'STALE'}">
+                                <span class="pill pill-stale">Stale</span>
+                                <div class="subtext" th:text="${row.ageText}">Checked 0 hours, 8 minutes, 0 seconds ago</div>
+                                <div class="subtext" th:text="'Last result: ' + (${row.lastCheck.up} ? 'Up' : 'Down')">Last result: Up</div>
+                            </th:block>
                         </td>
                         <td class="num" th:text="${row.lastCheck != null ? row.lastCheck.statusCode : '—'}">—</td>
                         <td class="num" th:text="${row.lastCheck != null ? row.lastCheck.latencyMs + ' ms' : '—'}">—</td>

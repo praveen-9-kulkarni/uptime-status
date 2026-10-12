@@ -13,15 +13,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.project.uptime_status.enums.State;
 import com.project.uptime_status.exception.UnknownTargetException;
 import com.project.uptime_status.persistence.CheckResultEntity;
 import com.project.uptime_status.persistence.CheckResultHistoryEntity;
@@ -39,8 +43,50 @@ class TargetServiceTest {
 	@Mock
 	private CheckResultHistoryRepository checkResultHistoryRepository;
 
-	@InjectMocks
 	private TargetService targetService;
+
+	@BeforeEach
+	void setUp() {
+		targetService = new TargetService(checkResultRepository, checkResultHistoryRepository, Clock.systemUTC(), 60_000, 2, 10_000);
+	}
+
+	// Stale threshold with the defaults above: 2 * 60_000 + 10_000 = 130_000 ms.
+	private static final Instant NOW = Instant.parse("2026-10-12T10:00:00Z");
+
+	private TargetService serviceAt(Instant now) {
+		return new TargetService(checkResultRepository, checkResultHistoryRepository,
+				Clock.fixed(now, ZoneOffset.UTC), 60_000, 2, 10_000);
+	}
+
+	@Test
+	void stateOf_noResult_isNoData() {
+		assertEquals(State.NO_DATA, serviceAt(NOW).stateOf(null));
+	}
+
+	@Test
+	void stateOf_freshUp_isUp() {
+		CheckResult result = new CheckResult(true, 200, 50, NOW.minusSeconds(30));
+		assertEquals(State.UP, serviceAt(NOW).stateOf(result));
+	}
+
+	@Test
+	void stateOf_freshDown_isDown() {
+		CheckResult result = new CheckResult(false, null, 50, NOW.minusSeconds(30));
+		assertEquals(State.DOWN, serviceAt(NOW).stateOf(result));
+	}
+
+	@Test
+	void stateOf_exactlyAtThreshold_isNotStale() {
+		CheckResult result = new CheckResult(true, 200, 50, NOW.minusMillis(130_000));
+		assertEquals(State.UP, serviceAt(NOW).stateOf(result));
+	}
+
+	@Test
+	void stateOf_pastThreshold_isStaleEvenIfLastWasUpOrDown() {
+		Instant old = NOW.minusMillis(130_001);
+		assertEquals(State.STALE, serviceAt(NOW).stateOf(new CheckResult(true, 200, 50, old)));
+		assertEquals(State.STALE, serviceAt(NOW).stateOf(new CheckResult(false, null, 50, old)));
+	}
 
 	@Test
 	void getTarget_knownKey_returnsCatalogEntry() {

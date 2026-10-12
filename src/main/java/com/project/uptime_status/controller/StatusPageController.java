@@ -1,5 +1,8 @@
 package com.project.uptime_status.controller;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,16 +18,21 @@ import com.project.uptime_status.service.TargetService;
 import com.project.uptime_status.service.TargetService.CheckResult;
 import com.project.uptime_status.service.TargetService.Target;
 
+import com.project.uptime_status.enums.State;
+
 @Controller
 @RequestMapping("/status")
 public class StatusPageController {
 
-    public record StatusRow(String key, Target target, CheckResult lastCheck) {}
+    public record StatusRow(String key, Target target, CheckResult lastCheck, State state, String ageText) {}
 
     private final TargetService targetService;
+    private final Clock clock;
+    
+    public StatusPageController(TargetService targetService, Clock clock) {
 
-    public StatusPageController(TargetService targetService) {
         this.targetService = targetService;
+        this.clock = clock;
     }
 
     @GetMapping
@@ -32,7 +40,10 @@ public class StatusPageController {
         List<StatusRow> rows = new ArrayList<>();
         for (Map.Entry<String, Target> entry : targetService.targetCatalog().entrySet()) {
             String key = entry.getKey();
-            rows.add(new StatusRow(key, entry.getValue(), targetService.lastCheck(key)));
+            CheckResult lastCheck = targetService.lastCheck(key);
+            State state = targetService.stateOf(lastCheck);
+            String ageText = state == State.STALE ? age(lastCheck.observedAt(), clock.instant()) : null;
+            rows.add(new StatusRow(key, entry.getValue(), lastCheck, state, ageText));
         }
         model.addAttribute("rows", rows);
         return "status";
@@ -53,5 +64,12 @@ public class StatusPageController {
         model.addAttribute("target", target);
         model.addAttribute("history", history);
         return "status-history";
+    }
+
+    private String age(Instant observedAt, Instant now) {
+        
+        Duration d = Duration.between(observedAt, now);
+        return "Checked %d hours, %d minutes, %d seconds ago"
+               .formatted(d.toHours(), d.toMinutesPart(), d.toSecondsPart());
     }
 }
