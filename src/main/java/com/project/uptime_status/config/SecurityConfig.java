@@ -18,7 +18,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(
-            auth -> auth.requestMatchers(HttpMethod.GET, "/status/**", "/actuator/**").permitAll()
+            auth -> auth.requestMatchers(HttpMethod.GET, "/status/**", "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.POST, "/status/*/check").permitAll()
                         .requestMatchers("/targets/**").permitAll()
                         .requestMatchers("/favicon.ico", "/favicon.svg", "/css/**").permitAll()
