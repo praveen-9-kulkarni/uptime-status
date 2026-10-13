@@ -34,6 +34,8 @@ import com.project.uptime_status.repository.CheckResultRepository;
 import com.project.uptime_status.service.TargetService.CheckResult;
 import com.project.uptime_status.service.TargetService.Target;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+
 @ExtendWith(MockitoExtension.class)
 class TargetServiceTest {
 
@@ -43,11 +45,27 @@ class TargetServiceTest {
 	@Mock
 	private CheckResultHistoryRepository checkResultHistoryRepository;
 
+	private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+
 	private TargetService targetService;
 
 	@BeforeEach
 	void setUp() {
-		targetService = new TargetService(checkResultRepository, checkResultHistoryRepository, Clock.systemUTC(), 60_000, 2, 10_000);
+		targetService = new TargetService(checkResultRepository, checkResultHistoryRepository, Clock.systemUTC(),
+				60_000, 2, 10_000, meterRegistry);
+	}
+
+	@Test
+	void check_knownKey_recordsProbeCounterAndLatencyTimer() {
+		when(checkResultRepository.save(any(CheckResultEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(checkResultHistoryRepository.save(any(CheckResultHistoryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		targetService.check("github");
+
+		double probes = meterRegistry.find("uptime.probe").tag("slug", "github").counters().stream()
+				.mapToDouble(c -> c.count()).sum();
+		assertEquals(1.0, probes);
+		assertEquals(1, meterRegistry.get("uptime.probe.latency").tag("slug", "github").timer().count());
 	}
 
 	// Stale threshold with the defaults above: 2 * 60_000 + 10_000 = 130_000 ms.
@@ -55,7 +73,7 @@ class TargetServiceTest {
 
 	private TargetService serviceAt(Instant now) {
 		return new TargetService(checkResultRepository, checkResultHistoryRepository,
-				Clock.fixed(now, ZoneOffset.UTC), 60_000, 2, 10_000);
+				Clock.fixed(now, ZoneOffset.UTC), 60_000, 2, 10_000, meterRegistry);
 	}
 
 	@Test

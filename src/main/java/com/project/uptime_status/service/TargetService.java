@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,8 @@ import com.project.uptime_status.persistence.CheckResultEntity;
 import com.project.uptime_status.persistence.CheckResultHistoryEntity;
 import com.project.uptime_status.repository.CheckResultHistoryRepository;
 import com.project.uptime_status.repository.CheckResultRepository;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
 public class TargetService {
@@ -49,6 +52,7 @@ public class TargetService {
     private final int probeIntervalMs;
     private final int staleAfterIntervals;
     private final int staleGraceMs;
+    private final MeterRegistry meterRegistry;
 
     public TargetService(
             CheckResultRepository checkResultRepository,
@@ -56,7 +60,8 @@ public class TargetService {
             Clock clock,
             @Value("${uptime.probe-interval-ms}") int probeIntervalMs,
             @Value("${uptime.stale-after-intervals}") int staleAfterIntervals,
-            @Value("${uptime.stale-grace-ms}") int staleGraceMs) {
+            @Value("${uptime.stale-grace-ms}") int staleGraceMs,
+            MeterRegistry meterRegistry) {
 
         this.checkResultRepository = checkResultRepository;
         this.checkResultHistoryRepository = checkResultHistoryRepository;
@@ -64,6 +69,7 @@ public class TargetService {
         this.probeIntervalMs = probeIntervalMs;
         this.staleAfterIntervals = staleAfterIntervals;
         this.staleGraceMs = staleGraceMs;
+        this.meterRegistry = meterRegistry;
     }
 
     public Target getTarget(String key) {
@@ -105,6 +111,8 @@ public class TargetService {
     
         Target target = resolveTargetOrThrow(key);
         CheckResult result = probe(target.url());
+        meterRegistry.counter("uptime.probe", "slug", key, "outcome", result.up() ? "up" : "down").increment();
+        meterRegistry.timer("uptime.probe.latency", "slug", key).record(result.latencyMs(), TimeUnit.MILLISECONDS);
         checkResultRepository.save(toEntity(key, result));
         checkResultHistoryRepository.save(toHistoryEntity(key, result));
         return result;
